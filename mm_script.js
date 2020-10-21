@@ -2,9 +2,10 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.001
+// @version 1.002
 // @include https://www.youtube.com/*
 // @grant none
+// @run-at document-start
 // ==/UserScript==
 
 /**
