@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.0
+// @version 1.001
 // @include https://www.youtube.com/*
 // @grant none
 // ==/UserScript==
@@ -94,4 +94,8 @@ function stopYoutube()
     document.body.style.color = '#fff';
     document.body.style.fontSize = '60px';
     document.body.innerHTML = '<div style="text-align:center">:)</div>';
+
+    setTimeout(function() {
+        document.location.href = "https://www.google.com/search?q=motivation+to+work";
+    }, 1000);
 }
