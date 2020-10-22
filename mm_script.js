@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.003
+// @version 1.004
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -28,9 +28,11 @@ const redirectUrl = "https://www.google.com/search?q=motivation+to+work";
  * STOP! Everything else is a matrix ;)
  * ------------------------------------------
  **/
-let intervalId;
-if (confirm("You're not working?"))
+function extYoutubeTimer()
 {
+    if (! confirm("You're not working?"))
+        return;
+
     const date = new Date();
     const currentHour = date.getHours();
 
@@ -53,9 +55,13 @@ if (confirm("You're not working?"))
             localStorage.setItem('stop', '0');
         }
 
+        const currentUrl = document.location.href;
         let reminderInterval = 0;
-        intervalId = setInterval(function()
+        let intervalId = setInterval(function()
         {
+            if (document.hidden)
+                return;
+
             let timer = localStorage.getItem('timer');
             timer = (timer === null) ? 0 : parseInt(timer);
             localStorage.setItem('timer', timer+checkIntervalInSeconds);
@@ -64,6 +70,7 @@ if (confirm("You're not working?"))
             if (timer >= (dailyLimitInMinutes * 60))
             {
                 localStorage.setItem('stop', '1');
+                clearInterval(intervalId);
                 stopYoutube();
             }
             else if (reminderInterval >= reminderIntervalInSeconds)
@@ -74,10 +81,18 @@ if (confirm("You're not working?"))
                 setTimeout(function()
                 {
                     if (confirm('Maybe enough already?'))
+                    {
+                        clearInterval(intervalId);
                         stopYoutube();
+                    }
                     else
                         setTimeout(pausePlayer,500);
                 }, 500);
+            }
+            else if (currentUrl !== document.location.href)
+            {
+                clearInterval(intervalId);
+                extYoutubeTimer();
             }
         }, checkIntervalInSeconds * 1000);
     }
@@ -92,7 +107,6 @@ function stopYoutube()
         document.body.style.fontSize = '60px';
         document.body.innerHTML = '<div style="text-align:center">:)</div>';
 
-        clearInterval(intervalId);
         setTimeout(redirectFromYoutube, 1000);
     }
     else
@@ -108,3 +122,6 @@ function redirectFromYoutube()
 {
     document.location.href = redirectUrl;
 }
+
+//===== START =====//
+extYoutubeTimer();
