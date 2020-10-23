@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.004
+// @version 1.005
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -28,100 +28,105 @@ const redirectUrl = "https://www.google.com/search?q=motivation+to+work";
  * STOP! Everything else is a matrix ;)
  * ------------------------------------------
  **/
-function extYoutubeTimer()
+const extYT = extYT ||
 {
-    if (! confirm("You're not working?"))
-        return;
-
-    const date = new Date();
-    const currentHour = date.getHours();
-
-    let isStop = localStorage.getItem('stop');
-    if (isStop === null)
-        isStop = 0;
-
-    if ((currentHour >= workingHours.from && currentHour <= workingHours.to) || isStop > 0)
-        stopYoutube();
-    else
+    extYoutubeTimer: function()
     {
-        let dayId      = date.getMonth() + date.getDay();
-        let savedDayId = localStorage.getItem('dayId');
+        if (! confirm("You're not working?"))
+            return;
 
-        savedDayId = (savedDayId == null) ? 0 : parseInt(savedDayId);
-        if (savedDayId !== dayId)
+        let isStop = localStorage.getItem('stop');
+        if (isStop === null)
+            isStop = 0;
+
+        if ((extYT.currentHour >= workingHours.from && extYT.currentHour <= workingHours.to) || isStop > 0)
+            extYT.stopYoutube();
+        else
         {
-            localStorage.setItem('dayId', dayId.toString());
-            localStorage.setItem('timer', '0');
-            localStorage.setItem('stop', '0');
-        }
+            let dayId      = extYT.date.getMonth() + extYT.date.getDay();
+            let savedDayId = localStorage.getItem('dayId');
 
-        const currentUrl = document.location.href;
-        let reminderInterval = 0;
-        let intervalId = setInterval(function()
-        {
-            if (document.hidden)
-                return;
-
-            let timer = localStorage.getItem('timer');
-            timer = (timer === null) ? 0 : parseInt(timer);
-            localStorage.setItem('timer', timer+checkIntervalInSeconds);
-            reminderInterval += checkIntervalInSeconds;
-
-            if (timer >= (dailyLimitInMinutes * 60))
+            savedDayId = (savedDayId == null) ? 0 : parseInt(savedDayId);
+            if (savedDayId !== dayId)
             {
-                localStorage.setItem('stop', '1');
-                clearInterval(intervalId);
-                stopYoutube();
+                localStorage.setItem('dayId', dayId.toString());
+                localStorage.setItem('timer', '0');
+                localStorage.setItem('stop', '0');
             }
-            else if (reminderInterval >= reminderIntervalInSeconds)
-            {
-                reminderInterval = 0;
 
-                pausePlayer();
-                setTimeout(function()
+            const currentUrl = document.location.href;
+            let reminderInterval = 0;
+            let intervalId = setInterval(function()
+            {
+                if (document.hidden)
+                    return;
+
+                let timer = localStorage.getItem('timer');
+                timer = (timer === null) ? 0 : parseInt(timer);
+                localStorage.setItem('timer', timer+checkIntervalInSeconds);
+                reminderInterval += checkIntervalInSeconds;
+
+                if (timer >= (dailyLimitInMinutes * 60))
                 {
-                    if (confirm('Maybe enough already?'))
+                    localStorage.setItem('stop', '1');
+                    clearInterval(intervalId);
+                    extYT.stopYoutube();
+                }
+                else if (reminderInterval >= reminderIntervalInSeconds)
+                {
+                    reminderInterval = 0;
+
+                    extYT.pausePlayer();
+                    setTimeout(function()
                     {
-                        clearInterval(intervalId);
-                        stopYoutube();
-                    }
-                    else
-                        setTimeout(pausePlayer,500);
-                }, 500);
-            }
-            else if (currentUrl !== document.location.href)
-            {
-                clearInterval(intervalId);
-                extYoutubeTimer();
-            }
-        }, checkIntervalInSeconds * 1000);
-    }
-}
+                        if (confirm('Maybe enough already?'))
+                        {
+                            clearInterval(intervalId);
+                            extYT.stopYoutube();
+                        }
+                        else
+                            setTimeout(extYT.pausePlayer,500);
+                    }, 500);
+                }
+                else if (currentUrl !== document.location.href)
+                {
+                    clearInterval(intervalId);
+                    extYT.extYoutubeTimer();
+                }
+            }, checkIntervalInSeconds * 1000);
+        }
+    },
 
-function stopYoutube()
-{
-    if (document.body !== null)
+    stopYoutube: function()
     {
-        document.body.style.background = '#181818';
-        document.body.style.color = '#fff';
-        document.body.style.fontSize = '60px';
-        document.body.innerHTML = '<div style="text-align:center">:)</div>';
+        if (document.body !== null)
+        {
+            document.body.style.background = '#181818';
+            document.body.style.color = '#fff';
+            document.body.style.fontSize = '60px';
+            document.body.innerHTML = '<div style="text-align:center">:)</div>';
 
-        setTimeout(redirectFromYoutube, 1000);
+            setTimeout(extYT.redirectFromYoutube, 1000);
+        }
+        else
+            extYT.redirectFromYoutube();
+    },
+
+    pausePlayer: function()
+    {
+        document.getElementsByClassName("html5-main-video")[0].click();
+    },
+
+    redirectFromYoutube: function()
+    {
+        document.location.href = redirectUrl;
+    },
+
+    init: function()
+    {
+        this.date = new Date();
+        this.currentHour = this.date.getHours();
+        this.extYoutubeTimer();
     }
-    else
-        redirectFromYoutube();
-}
-
-function pausePlayer()
-{
-    document.getElementsByClassName("html5-main-video")[0].click();
-}
-
-function redirectFromYoutube()
-{
-    document.location.href = redirectUrl;
-}
-
-//===== START =====//
-extYoutubeTimer();
+};
+extYT.init();
