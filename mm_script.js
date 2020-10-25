@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.006
+// @version 1.007
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -29,6 +29,14 @@ const redirectUrl = "https://www.google.com/search?q=motivation+to+work";
  * ------------------------------------------
  **/
 const extYT = {
+    dayId: null,
+    currentUrl: null,
+    intervalHandlers: {
+        newPageControl: null,
+        setReminder: null,
+        setTimer: null,
+    },
+
     extYoutubeTimer: function()
     {
         if (document.hidden)
@@ -44,65 +52,107 @@ const extYT = {
                         extYT.stopYoutube();
                     else
                     {
-                        let dayId      = extYT.date.getMonth() + extYT.date.getDay();
-                        let savedDayId = localStorage.getItem('dayId');
-
-                        savedDayId = (savedDayId == null) ? 0 : parseInt(savedDayId);
-                        if (savedDayId !== dayId)
-                        {
-                            localStorage.setItem('dayId', dayId.toString());
-                            localStorage.setItem('timer', '0');
-                            localStorage.setItem('stop', '0');
-                        }
-
-                        const currentUrl = document.location.href;
-                        let reminderInterval = 0;
-                        let intervalId = setInterval(function()
-                        {
-                            if (document.hidden)
-                                return;
-
-                            let timer = localStorage.getItem('timer');
-                            timer = (timer === null) ? 0 : parseInt(timer);
-                            localStorage.setItem('timer', timer+checkIntervalInSeconds);
-                            reminderInterval += checkIntervalInSeconds;
-
-                            if (timer >= (dailyLimitInMinutes * 60))
-                            {
-                                localStorage.setItem('stop', '1');
-                                clearInterval(intervalId);
-                                extYT.stopYoutube();
-                            }
-                            else if (reminderInterval >= reminderIntervalInSeconds)
-                            {
-                                reminderInterval = 0;
-
-                                extYT.playerMode(true);
-                                setTimeout(function()
-                                {
-                                    if (confirm('Maybe enough already?'))
-                                    {
-                                        clearInterval(intervalId);
-                                        extYT.stopYoutube();
-                                    }
-                                    else
-                                        setTimeout(function() { extYT.playerMode(false); },500);
-                                }, 500);
-                            }
-                            else if (currentUrl !== document.location.href)
-                            {
-                                clearInterval(intervalId);
-                                extYT.extYoutubeTimer();
-                            }
-                        }, checkIntervalInSeconds * 1000);
+                        extYT.saveTimerData();
+                        extYT.setTimer();
+                        extYT.newPageControl();
+                        extYT.setReminder();
                     }
                 }
-            }, 1000);
+                else
+                {
+                    extYT.newPageControl();
+                    extYT.setReminder();
+                }
+            }, 500);
         }
+    },
+
+    newPageControl: function()
+    {
+        extYT.currentUrl = document.location.href;
+        if (extYT.intervalHandlers.newPageControl !== null)
+            return;
+
+        extYT.intervalHandlers.newPageControl = setInterval(function()
+        {
+            if (extYT.currentUrl === document.location.href)
+                return;
+            if (extYT.intervalHandlers.setTimer !== null)
+                clearInterval(extYT.intervalHandlers.setTimer);
+            extYT.extYoutubeTimer();
+        }, 5000);
+    },
+
+    setReminder: function()
+    {
+        if (extYT.intervalHandlers.setReminder !== null)
+            return;
+
+        extYT.intervalHandlers.setReminder = setInterval(function()
+        {
+            extYT.playerMode(true);
+            setTimeout(function()
+            {
+                if (confirm('Maybe enough already?'))
+                    extYT.stopYoutube();
+                else
+                    setTimeout(function() { extYT.playerMode(false); },500);
+            }, 500);
+        }, reminderIntervalInSeconds * 1000);
+    },
+
+    setTimer: function()
+    {
+        extYT.intervalHandlers.setTimer = setInterval(function()
+        {
+            if (document.hidden)
+                return;
+
+            let timer = localStorage.getItem('timer');
+            timer = (timer === null) ? 0 : parseInt(timer);
+            localStorage.setItem('timer', timer+checkIntervalInSeconds);
+
+            if (timer >= (dailyLimitInMinutes * 60))
+            {
+                localStorage.setItem('stop', '1');
+                extYT.stopYoutube();
+            }
+        }, checkIntervalInSeconds * 1000);
+    },
+
+    saveTimerData: function()
+    {
+        if (extYT.dayId !== null)
+            return;
+
+        extYT.dayId    = extYT.date.getMonth() + extYT.date.getDay();
+        let savedDayId = localStorage.getItem('dayId');
+            savedDayId = (savedDayId == null) ? 0 : parseInt(savedDayId);
+
+        if (savedDayId !== extYT.dayId)
+        {
+            localStorage.setItem('dayId', extYT.dayId.toString());
+            localStorage.setItem('timer', '0');
+            localStorage.setItem('stop', '0');
+        }
+    },
+
+    clearIntervals: function()
+    {
+        const ih = extYT.intervalHandlers;
+        if (ih.newPageControl !== null)
+            clearInterval(ih.newPageControl);
+        if (ih.setReminder !== null)
+            clearInterval(ih.setReminder);
+        if (ih.setTimer !== null)
+            clearInterval(ih.setTimer);
+        ih.newPageControl = ih.setReminder = ih.setTimer = null;
     },
 
     stopYoutube: function()
     {
+        extYT.clearIntervals();
+
         if (document.body !== null)
         {
             document.body.style.background = '#181818';
