@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.007
+// @version 1.008
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -186,8 +186,16 @@ const extYT = {
 
     init: function()
     {
+        // do not run in frames
+        const w = (unsafeWindow !== "undefined") ? unsafeWindow : window;
+        if (w.self !== w.top)
+            return;
+
+        // save dates
         this.date = new Date();
         this.currentHour = this.date.getHours();
+
+        // run
         this.extYoutubeTimer();
     }
 };
