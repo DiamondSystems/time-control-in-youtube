@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.010
+// @version 1.011
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -48,11 +48,12 @@ const extYT = {
             {
                 if (confirm("You're not working?"))
                 {
+                    extYT.saveTimerData();
+
                     if ((extYT.currentHour >= workingHours.from && extYT.currentHour < workingHours.to) || localStorage.getItem('stop') === '1')
                         extYT.stopYoutube();
                     else
                     {
-                        extYT.saveTimerData();
                         extYT.setTimer();
                         extYT.newPageControl();
                         extYT.setReminder();
