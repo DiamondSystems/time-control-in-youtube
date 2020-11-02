@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.011
+// @version 1.012
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -170,7 +170,7 @@ const extYT = {
     playerMode: function(isPause)
     {
         const player = document.getElementById('movie_player');  // or .getElementsByClassName("html5-main-video")[0]
-        if (player === null)
+        if (player === null || document.hidden)
             return;
 
         if ((player.parentElement.getElementsByClassName('paused-mode').length > 0 && ! isPause) ||
