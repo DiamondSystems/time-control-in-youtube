@@ -2,7 +2,7 @@
 // @name EXT YouTube timer
 // @author DiamondSystems
 // @license GPLv3
-// @version 1.012
+// @version 1.013
 // @include https://www.youtube.com/*
 // @grant none
 // @run-at document-start
@@ -37,17 +37,46 @@ const extYT = {
         setTimer: null,
     },
 
+    confirm: function(msg, callableOk = null, callableCancel = null)
+    {
+        if (document.hidden || typeof msg !== "string")
+            return;
+
+        const player = document.getElementById('movie_player');  // or .getElementsByClassName("html5-main-video")[0]
+        const isPlaying = player !== null && player.parentElement.getElementsByClassName('playing-mode').length > 0;
+
+        if (isPlaying)
+            player.click();
+
+        setTimeout(function()
+        {
+            if (confirm(msg))
+            {
+                if (typeof callableOk === "function")
+                    callableOk();
+            }
+            else
+            {
+                if (typeof callableCancel === "function")
+                    callableCancel();
+                setTimeout(function()
+                {
+                    if (isPlaying && player.parentElement.getElementsByClassName('paused-mode').length > 0)
+                        player.click();
+                },500);
+            }
+        }, 500);
+    },
+
     extYoutubeTimer: function()
     {
         if (document.hidden)
             setTimeout(extYT.extYoutubeTimer, 5000);
         else
         {
-            extYT.playerMode(true);
-            setTimeout(function()
-            {
-                if (confirm("You're not working?"))
-                {
+            extYT.confirm(
+                "You're not working?",
+                function() {
                     extYT.saveTimerData();
 
                     if ((extYT.currentHour >= workingHours.from && extYT.currentHour < workingHours.to) || localStorage.getItem('stop') === '1')
@@ -58,13 +87,12 @@ const extYT = {
                         extYT.newPageControl();
                         extYT.setReminder();
                     }
-                }
-                else
-                {
+                },
+                function() {
                     extYT.newPageControl();
                     extYT.setReminder();
                 }
-            }, 500);
+            );
         }
     },
 
@@ -91,14 +119,12 @@ const extYT = {
 
         extYT.intervalHandlers.setReminder = setInterval(function()
         {
-            extYT.playerMode(true);
-            setTimeout(function()
-            {
-                if (confirm('Maybe enough already?'))
+            extYT.confirm(
+                'Maybe enough already?',
+                function() {
                     extYT.stopYoutube();
-                else
-                    setTimeout(function() { extYT.playerMode(false); },500);
-            }, 500);
+                }
+            );
         }, reminderIntervalInSeconds * 1000);
     },
 
@@ -165,19 +191,6 @@ const extYT = {
         }
         else
             extYT.redirectFromYoutube();
-    },
-
-    playerMode: function(isPause)
-    {
-        const player = document.getElementById('movie_player');  // or .getElementsByClassName("html5-main-video")[0]
-        if (player === null || document.hidden)
-            return;
-
-        if ((player.parentElement.getElementsByClassName('paused-mode').length > 0 && ! isPause) ||
-            (player.parentElement.getElementsByClassName('playing-mode').length > 0 && isPause))
-        {
-            player.click();
-        }
     },
 
     redirectFromYoutube: function()
